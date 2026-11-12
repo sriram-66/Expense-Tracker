@@ -2,7 +2,7 @@
 
 A full-stack personal finance app. Users sign up, log in, record expenses, and see monthly spending by category and a 6-month trend.
 
-**Live demo:** _add your Render link here_
+**Live demo:** https://expense-tracker-csvv.onrender.com
 
 ## Features
 - Secure signup and login (salted PBKDF2 password hashing, JWT authentication)
