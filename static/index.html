@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Expense Tracker</title>
+<style>
+  :root {
+    --bg: #f3f5f4; --surface: #ffffff; --ink: #1d2b2a; --soft: #607170;
+    --line: #dbe2e0; --brand: #0f6b5c; --brand-ink: #ffffff; --danger: #b3382c;
+    --font: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--ink); }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 1.3rem; margin: 0; }
+  h2 { font-size: 1rem; margin: 0 0 10px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 10px; flex-wrap: wrap; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+  label { display: block; font-size: 0.85rem; color: var(--soft); margin-bottom: 4px; }
+  input, select, button { font: inherit; padding: 9px 11px; border-radius: 8px; border: 1px solid var(--line); background: #fff; color: var(--ink); }
+  input, select { width: 100%; }
+  button { cursor: pointer; background: var(--brand); color: var(--brand-ink); border: 0; font-weight: 600; }
+  button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  button.del { background: transparent; color: var(--danger); padding: 4px 8px; }
+  input:focus-visible, select:focus-visible, button:focus-visible { outline: 3px solid #e0a526; outline-offset: 2px; }
+  .field { flex: 1 1 140px; }
+  .stat { font-size: 1.8rem; font-weight: 700; color: var(--brand); }
+  .muted { color: var(--soft); font-size: 0.9rem; }
+  .error { color: var(--danger); font-size: 0.9rem; min-height: 1.2em; margin-top: 8px; }
+  ul.list { list-style: none; margin: 0; padding: 0; }
+  ul.list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  ul.list li:last-child { border-bottom: 0; }
+  .amt { font-weight: 600; white-space: nowrap; }
+  .chart-box { position: relative; height: 240px; }
+  .hidden { display: none; }
+  #authCard { max-width: 380px; margin: 8vh auto 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="authCard" class="card">
+    <h1>Expense Tracker</h1>
+    <p class="muted">Log in or create an account to track your spending.</p>
+    <label for="username">Username</label>
+    <input id="username" autocomplete="username">
+    <label for="password" style="margin-top:10px">Password (6+ characters)</label>
+    <input id="password" type="password" autocomplete="current-password">
+    <div class="row" style="margin-top:14px">
+      <button id="loginBtn" type="button">Log in</button>
+      <button id="signupBtn" type="button" class="ghost">Sign up</button>
+    </div>
+    <div class="error" id="authError" role="alert"></div>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="topbar">
+      <h1>Expense Tracker</h1>
+      <div class="row" style="align-items:center">
+        <span class="muted" id="who"></span>
+        <button id="logoutBtn" type="button" class="ghost">Log out</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Add expense</h2>
+      <div class="row">
+        <div class="field"><label for="amount">Amount</label><input id="amount" type="number" min="0.01" step="0.01"></div>
+        <div class="field"><label for="category">Category</label>
+          <select id="category">
+            <option>Food</option><option>Transport</option><option>Rent</option>
+            <option>Shopping</option><option>Bills</option><option>Health</option>
+            <option>Entertainment</option><option>Other</option>
+          </select>
+        </div>
+        <div class="field"><label for="date">Date</label><input id="date" type="date"></div>
+        <div class="field" style="flex:2 1 200px"><label for="desc">Note (optional)</label><input id="desc" maxlength="200"></div>
+      </div>
+      <div class="row" style="margin-top:12px; align-items:center">
+        <button id="addBtn" type="button">Add expense</button>
+        <span class="error" id="addError" role="alert"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between; align-items:end">
+        <div>
+          <div class="muted">Total spent</div>
+          <div class="stat" id="total">0.00</div>
+          <div class="muted" id="count"></div>
+        </div>
+        <div class="field" style="flex:0 1 180px"><label for="month">Month</label><input id="month" type="month"></div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card"><h2>Spending by category</h2><div class="chart-box"><canvas id="catChart"></canvas></div><div class="muted" id="catEmpty"></div></div>
+      <div class="card"><h2>Last 6 months</h2><div class="chart-box"><canvas id="monthChart"></canvas></div></div>
+    </div>
+
+    <div class="card">
+      <h2>Expenses</h2>
+      <ul class="list" id="list"></ul>
+      <div class="muted" id="listEmpty"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+  const $ = (id) => document.getElementById(id);
+  let token = null, catChart = null, monthChart = null;
+  try { token = localStorage.getItem("et_token"); } catch (e) {}
+
+  const COLORS = ["#0f6b5c", "#e0a526", "#3b7dd8", "#b3382c", "#7a5cc7", "#2f9e6b", "#d9692b", "#607170"];
+
+  async function api(path, opts = {}) {
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers.Authorization = "Bearer " + token;
+    const res = await fetch(path, { ...opts, headers });
+    if (res.status === 401 && token) { logout(); throw new Error("Session expired. Log in again."); }
+    if (!res.ok) {
+      let msg = "Something went wrong";
+      try {
+        const d = await res.json();
+        if (typeof d.detail === "string") msg = d.detail;
+        else if (Array.isArray(d.detail)) msg = "Check your input: " + d.detail[0].loc.slice(-1)[0];
+      } catch (e) {}
+      throw new Error(msg);
+    }
+    return res.status === 204 ? null : res.json();
+  }
+
+  function money(n) { return Number(n).toFixed(2); }
+
+  // ---------- auth ----------
+  async function authenticate(kind) {
+    $("authError").textContent = "";
+    try {
+      const data = await api("/api/auth/" + kind, {
+        method: "POST",
+        body: JSON.stringify({ username: $("username").value.trim(), password: $("password").value })
+      });
+      token = data.access_token;
+      try { localStorage.setItem("et_token", token); localStorage.setItem("et_user", data.username); } catch (e) {}
+      showApp(data.username);
+    } catch (err) { $("authError").textContent = err.message; }
+  }
+
+  function logout() {
+    token = null;
+    try { localStorage.removeItem("et_token"); localStorage.removeItem("et_user"); } catch (e) {}
+    $("app").classList.add("hidden");
+    $("authCard").classList.remove("hidden");
+    $("password").value = "";
+  }
+
+  function showApp(username) {
+    $("authCard").classList.add("hidden");
+    $("app").classList.remove("hidden");
+    $("who").textContent = username;
+    refresh();
+  }
+
+  // ---------- data ----------
+  async function refresh() {
+    const month = $("month").value;
+    try {
+      const [sum, list, monthly] = await Promise.all([
+        api("/api/expenses/summary?month=" + month),
+        api("/api/expenses?month=" + month),
+        api("/api/expenses/monthly")
+      ]);
+      $("total").textContent = money(sum.total);
+      $("count").textContent = sum.count + (sum.count === 1 ? " expense" : " expenses");
+      renderList(list);
+      renderCharts(sum, monthly);
+    } catch (err) { /* session expiry is handled in api() */ }
+  }
+
+  function renderList(items) {
+    const ul = $("list");
+    ul.innerHTML = "";
+    $("listEmpty").textContent = items.length ? "" : "No expenses this month. Add your first one above.";
+    items.forEach((e) => {
+      const li = document.createElement("li");
+      const left = document.createElement("div");
+      const title = document.createElement("div");
+      title.textContent = e.category + (e.description ? " - " + e.description : "");
+      const sub = document.createElement("div");
+      sub.className = "muted"; sub.textContent = e.date;
+      left.append(title, sub);
+      const right = document.createElement("div");
+      right.className = "row"; right.style.alignItems = "center";
+      const amt = document.createElement("span");
+      amt.className = "amt"; amt.textContent = money(e.amount);
+      const del = document.createElement("button");
+      del.className = "del"; del.type = "button"; del.textContent = "Delete";
+      del.setAttribute("aria-label", "Delete " + e.category + " expense");
+      del.onclick = async () => { await api("/api/expenses/" + e.id, { method: "DELETE" }); refresh(); };
+      right.append(amt, del);
+      li.append(left, right);
+      ul.appendChild(li);
+    });
+  }
+
+  function renderCharts(sum, monthly) {
+    if (typeof Chart === "undefined") return;
+    if (catChart) catChart.destroy();
+    if (monthChart) monthChart.destroy();
+    $("catEmpty").textContent = sum.by_category.length ? "" : "No data for this month.";
+    catChart = new Chart($("catChart"), {
+      type: "doughnut",
+      data: {
+        labels: sum.by_category.map((c) => c.category),
+        datasets: [{ data: sum.by_category.map((c) => c.total), backgroundColor: COLORS }]
+      },
+      options: { maintainAspectRatio: false, plugins: { legend: { position: "bottom" } } }
+    });
+    monthChart = new Chart($("monthChart"), {
+      type: "bar",
+      data: {
+        labels: monthly.map((m) => m.month),
+        datasets: [{ label: "Total", data: monthly.map((m) => m.total), backgroundColor: "#0f6b5c" }]
+      },
+      options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+  }
+
+  async function addExpense() {
+    $("addError").textContent = "";
+    const amount = parseFloat($("amount").value);
+    if (!amount || amount <= 0) { $("addError").textContent = "Enter an amount above 0."; return; }
+    try {
+      await api("/api/expenses", {
+        method: "POST",
+        body: JSON.stringify({
+          amount, category: $("category").value, date: $("date").value, description: $("desc").value
+        })
+      });
+      $("amount").value = ""; $("desc").value = "";
+      const added = $("date").value.slice(0, 7);
+      if (added && added !== $("month").value) $("month").value = added;
+      refresh();
+    } catch (err) { $("addError").textContent = err.message; }
+  }
+
+  // ---------- init ----------
+  const today = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  $("date").value = today.getFullYear() + "-" + pad(today.getMonth() + 1) + "-" + pad(today.getDate());
+  $("month").value = today.getFullYear() + "-" + pad(today.getMonth() + 1);
+
+  $("loginBtn").onclick = () => authenticate("login");
+  $("signupBtn").onclick = () => authenticate("register");
+  $("logoutBtn").onclick = logout;
+  $("addBtn").onclick = addExpense;
+  $("month").onchange = refresh;
+  $("password").addEventListener("keydown", (e) => { if (e.key === "Enter") authenticate("login"); });
+
+  if (token) {
+    let name = "";
+    try { name = localStorage.getItem("et_user") || ""; } catch (e) {}
+    showApp(name);
+  }
+</script>
+</body>
+</html>
